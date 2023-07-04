@@ -1,0 +1,54 @@
+修改joint trajectory controller 的接口，使它完全变为effort接口，为后续转移到franka上提供基础
+好处：直接使用了它内部的quintic_spline_segment.h文件
+
+把franka的接口添加在了controller里面
+
+测试了Joint impedance controller, 关节层能用的还是意义不大，更多的还是要在笛卡尔层应用。
+
+在笛卡尔空间中实现了PD控制的笛卡尔空间阻抗控制，效果一般，只能走笛卡尔轨迹，走关节轨迹容易出错。通过改变stiffness系数可以有较好的跟踪误差。
+
+总是报错 communication_constraints_violation, 怀疑 controller的 update 执行时间太长：经过排查，发现是 preempt_rt 仍有问题，按照官网的流程再设置了一下，结果明显好转。但如果运行程序时，打开其他软件（VScode），会影响实时性。
+重新设置了q_nullspace = des_q。
+
+优化和改善了RBDyn获取参数的函数，其结果与Franka state的做了对比，验证了其准确性，并在Gazebo上做了仿真，验证了使用这种库的方案。
+
+20230628
+1、在franka joint trajectory中优化了state update 的代码，提高了实时性；
+2、测试了car_imp_joint_trajectory 的代码，真机测试是可以用的，但是仍然需要调参，不过结算的时间比较长，实时性还是比较弱；
+3、在franka force joint trajectory中也优化了代码，但是还没有真机测试；
+4、分别写了几个控制器：PD imp;car imp和force control(不能移动)
+
+
+20230703
+1、优化了car_imp_joint_trajectory 的代码，真机测试是可以用的，需要注意以下几点：
+	1） setCommand will compensate the gravity and fricition automatically
+	2）franka panda力矩传感器的位置与实际位置不符，而且franka state中得到的笛卡尔位置是默认位置（绕末端z轴旋转了45度，可以通过末端力矩传感器的位置测试），所以：
+	  sva::PTransformd cur_tf = cur_rbdyn_urdf_.mbc.bodyPosW[rbd_indices_[getNumberOfJoints()]];
+
+	  Eigen::Matrix4d cur_eig_tf = sva::conversions::toHomogeneous(cur_tf);
+
+	  external_wrench_transform_.setIdentity();
+	  external_wrench_transform_.topLeftCorner(3, 3) << cur_eig_tf.block(0, 0, 3, 3);
+	  external_wrench_transform_.bottomRightCorner(3, 3) << cur_eig_tf.block(0, 0, 3, 3);
+要改成：
+  Eigen::Affine3d transform(Eigen::Matrix4d::Map(franka_state_.O_T_EE.data()));
+  position_ = Eigen::Vector3d(transform.translation()); //franka state中得到的笛卡尔位置是默认位置（绕末端z轴旋转了45度）
+  orientation_ = Eigen::Quaterniond(transform.rotation());
+
+  external_wrench_transform_.topLeftCorner(3, 3) << transform.rotation();
+  external_wrench_transform_.bottomRightCorner(3, 3) << transform.rotation();
+	3） Cartesian impedance parameters:
+	gen.add("translational_stiffness", double_t, 0, "Cartesian translational stiffness", 1000, 100, 10000)
+	gen.add("rotational_stiffness", double_t, 0, "Cartesian rotational stiffness", 1600, 100, 10000)
+	gen.add("cartesian_damping_ratio", double_t, 0, "Cartesian damping ratio", 0.7, 0.5, 5)
+	gen.add("mass", double_t, 0, "Cartesian mass matrix", 3, 1, 100)  //1和2的时候会不稳定
+	
+	存在问题：旋转方向的精度太低,不如franka joint trajectory, 应该选用 Fext on stiffness frame，不能选用Base frame上的wrench。
+	两个frames 的力矩转换参考  
+		https://github.com/frankaemika/libfranka/issues/112  
+		https://blog.csdn.net/weixin_43455581/article/details/108617190
+		
+		
+		
+		
+		

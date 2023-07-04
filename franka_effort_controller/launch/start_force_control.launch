@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+
+	<!-- stop controller -->
+	<node name="ros_control_controller_manager_stop" pkg="controller_manager" type="controller_manager" respawn="false" 
+		 args="kill position_joint_trajectory_controller" />
+
+	<node pkg="rostopic" type="rostopic" name="force_set" args='pub -1 /franka_force_joint_trajectory_controller/force_control_desired_force std_msgs/Float64 1' />
+
+	<node name="ros_control_controller_manager_spawn" pkg="controller_manager" type="controller_manager" respawn="false" launch-prefix="bash -c 'sleep 0.5;$0 $@'"
+    output="screen" args="spawn franka_force_joint_trajectory_controller" />
+	
+</launch>

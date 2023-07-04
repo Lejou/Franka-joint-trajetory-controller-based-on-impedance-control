@@ -1,0 +1,227 @@
+
+
+page_maniger:
+
+    Page_main:
+        id: page_f
+    Page_secound:
+        id: page_s
+    Page_therd:
+        id: page_t
+
+
+<Separator>:
+    canvas:
+        Color:
+            rgba: self.sep_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<Content>
+    spacing: "5dp"
+    size_hint_y: None
+    height: "60dp"
+    canvas:
+        Color:
+            rgba: 0, 0, 1, 0.05
+        Rectangle:
+            size: self.size
+    MDBoxLayout:
+        orientation: "vertical"
+        size_hint: (0.5,1)
+        MDLabel:
+            text: root.Date
+            theme_text_color:'Secondary'
+        MDLabel:
+            text: root.Time
+            theme_text_color:'Secondary'
+    Separator:
+        size_hint:(0.005, .8)
+        pos_hint: {'center_x':0.20, 'center_y':0.5}
+         
+    MDLabel:
+        text: root.text
+    
+    Separator:
+        size_hint:(0.005, .8)
+        pos_hint: {'center_x':0.20, 'center_y':0.5}
+         
+    
+    MDFloatLayout:
+        size_hint: None, None
+        size: "50dp", "60dp"
+        MDCheckbox:
+            size_hint: None, None
+            size: "50dp", "60dp"
+            pos_hint: {'center_x': .5, 'center_y': .5}
+            on_active: app.on_checkbox_active(*args, root)
+
+
+<Content_complet>
+    spacing: "5dp"
+    size_hint_y: None
+    height: "60dp"
+    canvas:
+        Color:
+            rgba: 1, 0, 0, 0.05
+        Rectangle:
+            size: self.size
+    MDBoxLayout:
+        orientation: "vertical"
+        size_hint: (0.5,1)
+        MDLabel:
+            text: root.Date
+            theme_text_color:'Secondary'
+        MDLabel:
+            text: root.Time
+            theme_text_color:'Secondary'
+
+
+    Separator:
+        size_hint:(0.005, .8)
+        pos_hint: {'center_x':0.20, 'center_y':0.5}
+         
+    
+    
+    MDLabel:
+        text: root.text
+
+    Separator:
+        size_hint:(0.005, .8)
+        pos_hint: {'center_x':0.20, 'center_y':0.5}
+         
+    
+    MDFloatLayout:
+        size_hint: None, None
+        size: "50dp", "60dp"
+        MDCheckbox:
+            active: True
+            size_hint: None, None
+            size: "50dp", "60dp"
+            pos_hint: {'center_x': .5, 'center_y': .5}
+            on_active: app.on_checkbox_deactive(*args, root)
+
+
+
+
+
+
+
+
+
+
+
+<Page_main>
+    name:'first_page'
+    
+
+    MDBoxLayout:
+        id: main_Layout
+        orientation: "vertical"
+
+        MDTopAppBar:
+            id: toolbar
+            title: "Todo"
+            right_action_items: [["dots-vertical", lambda x: app.callback(x)]]
+
+
+
+        ScrollView:
+            MDSelectionList:
+                id: main_list
+                spacing: "10dp"
+                icon_check_color: [0,0,0,0]
+                icon_bg_color: [0,0,0,0]
+                progress_round_size: dp(0)
+                overlay_color: app.overlay_color[:-1] + [.2]
+                on_selected: app.on_selected(*args)
+                on_unselected: app.on_unselected(*args)
+                on_selected_mode: app.set_selection_mode(*args)
+    MDFloatingActionButton:
+        icon: "plus"
+        md_bg_color: app.theme_cls.primary_color
+        on_press: app.change_screen("secound_page")
+        pos_hint: {'center_x':0.9,'center_y':0.05}
+
+
+
+
+
+
+
+<Page_secound>
+    name:'secound_page'
+
+    MDBoxLayout:
+        id: main_Layout
+        orientation: "vertical"
+
+        MDTopAppBar:
+            title: "New Task"
+            pos_hint: {'x': 0.0, 'y': 0.905}
+            left_action_items: [["arrow-left",  lambda x: app.change_screen("first_page")]]
+
+        MDBoxLayout:
+            id: content_Layout
+            orientation: "vertical"
+            padding: 10
+
+            MDLabel:
+                text: "What is to be done?"
+                bold: True
+                color: (77/255, 123/255, 250/255, 1)
+
+            MDTextField:
+                id: Todo_entry
+                hint_text: "Enter Task Here"
+
+
+            MDLabel:
+                text: "Due Date"
+                bold: True
+                color: (77/255, 123/255, 250/255, 1)
+
+            MDTextField:
+                id: Date_entry
+                hint_text: "Enter Date"
+                on_focus: app.date_time_picker(self.focus)
+                
+                
+        MDBoxLayout:
+            orientation: "vertical"
+            
+    MDFloatingActionButton:
+        id: add_check_button
+        icon: "check"
+        md_bg_color: app.theme_cls.primary_color
+        on_press: app.add_new_todo()
+        pos_hint: {'center_x':0.9,'center_y':0.05}
+
+<Page_therd>
+    name:'Therd_page'
+    
+
+    MDBoxLayout:
+        id: main_Layout
+        orientation: "vertical"
+
+        MDTopAppBar:
+
+            title: "Completed Tasks"
+            pos_hint: {'x': 0.0, 'y': 0.905}
+            left_action_items: [["arrow-left",  lambda x: app.change_screen("first_page")]]
+
+
+
+        ScrollView:
+            MDSelectionList:
+                spacing: "20dp"
+                icon_check_color: [0,0,0,0]
+                icon_bg_color: [0,0,0,0]
+                id: complet_main_list
+                progress_round_size: dp(0)
+                overlay_color: app.overlay_color[:-1] + [.2]
+                on_selected: app.on_selected(*args)
+                on_unselected: app.on_unselected(*args)
+                on_selected_mode: app.set_selection_mode(*args)
